@@ -41,6 +41,9 @@ dependencies:
   provider: 
   audioplayers:
   lottie: 
+  mixpanel_flutter: 
+  purchases_flutter: ^6.30.0
+  
 
 dev_dependencies:
   flutter_test:

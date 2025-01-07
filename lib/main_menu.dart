@@ -1,3 +1,4 @@
+import 'package:FlipNSort/helper/mixpanel_manager.dart';
 import 'package:FlipNSort/home.dart';
 import 'package:FlipNSort/models/user.dart';
 import 'package:flutter/material.dart';
@@ -14,14 +15,15 @@ class _MainMenuState extends State<MainMenu> {
   String? singlePlayerName;
 
   List<String> avatars = [
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A29%3A49.938316..jpg?alt=media&token=dc7f1795-c860-4aad-919d-16387efde8de",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A16.464637..jpg?alt=media&token=ca7b1ec8-d250-4152-9ea1-6dc291988811",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A14.984907..jpg?alt=media&token=f90b0870-e74f-4496-935d-c464f424e7ed",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A13.401914..jpg?alt=media&token=232bdf36-e43b-4e5d-a4a6-e4be7f3f5473",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A10.930603..png?alt=media&token=3f30dd9a-3474-4117-be9e-92b986bb2e80",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A08.821785..jpg?alt=media&token=71cb46d8-c17d-4a7d-b01c-71ec46cffcf5",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A05.885129..jpg?alt=media&token=31dfcc6d-15f7-4ed2-a320-c3dd367fa518",
-    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-21%2014%3A31%3A04.034016..jpg?alt=media&token=5b79570b-1748-48c7-a2a0-32489ae04279",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A47%3A59.059517..png?alt=media&token=897e39d3-7901-4786-b065-eebea7bdd6fd",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A47%3A56.803204..png?alt=media&token=011447ae-d1c1-4ce1-ab1d-bc06eaa3177e",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A47%3A54.844568..png?alt=media&token=05f0c242-0f29-432a-9bd0-1d6b3122b891",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A52%3A11.990766..png?alt=media&token=6a376588-400a-4f0b-a903-eac4cd646448",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A52%3A09.108061..png?alt=media&token=bd06f42b-63c9-4329-9731-e841306fad04",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A52%3A07.637162..png?alt=media&token=d85a726a-2d02-4ad1-9b12-5b3883ff786d",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A52%3A06.129270..png?alt=media&token=b33376a8-b165-4a2e-9b8c-ee9a736cccf3",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A52%3A04.685405..png?alt=media&token=6f43348b-db36-4438-9a06-1863bc957260",
+    "https://firebasestorage.googleapis.com/v0/b/custom-voice-ai-app-736c1.appspot.com/o/userPhotos%2FmbFoaH1F9eZypiwMKgtsXpjrw0l1%2F2024-12-23%2017%3A52%3A02.799341..png?alt=media&token=24fbff12-ef3c-487c-9ba3-a0ec36287994",
   ];
 
   String gameType = "";
@@ -32,9 +34,19 @@ class _MainMenuState extends State<MainMenu> {
 
   String selectedPlayer = "playerOne";
 
+ 
+
   changePlayer(String player) {
     setState(() {
       selectedPlayer = player;
+    });
+  }
+
+  initMixPanel() {
+    MixpanelManager().init();
+
+    MixpanelManager().sendAnalyticToMixPanel("APP_OPENED", properties: {
+      "app_opened": "true",
     });
   }
 
@@ -55,6 +67,8 @@ class _MainMenuState extends State<MainMenu> {
   void initState() {
     super.initState();
     getAvatarsFromShared();
+    initMixPanel();
+
     _controller = VideoPlayerController.asset('assets/back.mp4')
       ..initialize().then((_) {
         _controller.setVolume(.5);
@@ -202,6 +216,11 @@ class _MainMenuState extends State<MainMenu> {
                             itemBuilder: (context, index) {
                               return GestureDetector(
                                 onTap: () {
+                                  MixpanelManager().sendAnalyticToMixPanel(
+                                      "AvatarSelected",
+                                      properties: {
+                                        "avatar": avatars[index].toString(),
+                                      });
                                   if (gameType == "single") {
                                     setState(() {
                                       singleAvatar = avatars[index];
@@ -307,6 +326,10 @@ class _MainMenuState extends State<MainMenu> {
                     GestureDetector(
                       onTap: () {
                         setState(() {
+                          MixpanelManager()
+                              .sendAnalyticToMixPanel("GameType", properties: {
+                            "type": "signle",
+                          });
                           gameType = "single";
                         });
                       },
@@ -339,6 +362,10 @@ class _MainMenuState extends State<MainMenu> {
                     SizedBox(height: 20),
                     GestureDetector(
                       onTap: () {
+                        MixpanelManager()
+                            .sendAnalyticToMixPanel("GameType", properties: {
+                          "type": "multi",
+                        });
                         setState(() {
                           gameType = "multi";
                         });

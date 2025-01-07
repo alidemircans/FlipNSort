@@ -1,8 +1,11 @@
+import 'package:FlipNSort/helper/contants.dart';
+import 'package:FlipNSort/helper/mixpanel_manager.dart';
 import 'package:FlipNSort/main_menu.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:video_player/video_player.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Eklenen kütüphane
 import 'dart:math';
@@ -36,16 +39,106 @@ class _HomePageState extends State<HomePage> {
   bool soundEffect = true;
 
   bool showCong = false;
+  bool purchaseIsLoading = false;
 
   String currentActivePlayer = "playerOne";
+
+  BannerAd? _bannerAd;
+
+  List<StoreProduct> products = [];
+
+  getInAppProducts() async {
+    products = await Purchases.getProducts(
+      [
+        "3can",
+      ],
+    );
+    setState(() {});
+  }
+
+  AnchoredAdaptiveBannerAdSize? bannerSize;
+  String bannerAdUnitId = Contants.ADMOB_BANNER_ADD_ID;
+  AdSize adSize = const AdSize(width: 100, height: 100);
+
+  RewardedAd? _rewardedAd;
+
+  void loadPrizeAd() {
+    RewardedAd.load(
+      adUnitId: Contants.ADMOB_PRIZE_ADD_ID,
+      request: const AdRequest(),
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
+        onAdLoaded: (x) {
+          setState(() {
+            _rewardedAd = x;
+          });
+        },
+        onAdFailedToLoad: (x) {},
+      ),
+    );
+  }
+
+  void loadBanner() async {
+    // Get an AnchoredAdaptiveBannerAdSize before loading the ad.
+    bannerSize = await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
+        MediaQuery.sizeOf(context).width.truncate());
+
+    setState(() {
+      _bannerAd = BannerAd(
+        adUnitId: bannerAdUnitId,
+        request: const AdRequest(),
+        size: adSize,
+        listener: BannerAdListener(
+          // Called when an ad is successfully received. 
+          onAdLoaded: (ad) {
+            debugPrint('$ad loaded.');
+            setState(() {});
+          },
+          // Called when an ad request failed.
+          onAdFailedToLoad: (ad, err) {
+            debugPrint('BannerAd failed to load: $err');
+            // Dispose the ad here to free resources.
+            ad.dispose();
+          },
+        ),
+      )..load();
+    });
+  }
+
+  firstAppOpen() async {
+    await SharedPreferences.getInstance().then((prefs) {
+      bool? firstAppOpen = prefs.getBool('firstAppOpen');
+      print("firstAppOpen $firstAppOpen");
+      if (firstAppOpen == null) {
+        prefs.setBool('firstAppOpen', false);
+        prefs.setInt('tipCount', 3);
+        MixpanelManager().sendAnalyticToMixPanel("FirstAppOpen", properties: {
+          "firstAppOpen": "true",
+        });
+        setState(() {
+          tipCount = 3;
+        });
+      } else {
+        print("APP OPENED BEFORE");
+        setState(() {
+          tipCount = prefs.getInt('tipCount') ?? 0;
+        });
+      }
+    });
+  }
+
+  int tipCount = 0;
 
   @override
   void initState() {
     super.initState();
+    firstAppOpen();
+    getInAppProducts();
 
     WidgetsBinding.instance.addPostFrameCallback((e) {
       _loadLevel(); // Seviyeyi yükle
       loadAd();
+      loadBanner();
+      loadPrizeAd();
     });
 
     audioPlayer = AudioPlayer(); // Ses oynatıcıyı başlat
@@ -68,7 +161,7 @@ class _HomePageState extends State<HomePage> {
 
   void loadAd() {
     InterstitialAd.load(
-        adUnitId: "ca-app-pub-6269735754809810/9687079521",
+        adUnitId: Contants.ADMOB_TRANFORM_ADD_ID,
         request: const AdRequest(),
         adLoadCallback: InterstitialAdLoadCallback(
           // Called when an ad is successfully received.
@@ -106,7 +199,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   int calculateGridSize(int level) {
-    return ((level + 1));
+    if (level <= 3) return 2; // İlk 3 seviyede 2x2 grid
+    if (level <= 5) return 3; // 4-6 seviyeleri 3x3 grid
+    if (level <= 10) return 4; // 7-10 seviyeleri 4x4 grid
+    return 5 + ((level - 10) ~/ 5); // 10'dan sonra daha yavaş artış
   }
 
   int calculateTotalCells(int level) {
@@ -119,6 +215,7 @@ class _HomePageState extends State<HomePage> {
     int gridSize = calculateGridSize(level);
 
     return Scaffold(
+      backgroundColor: Colors.black.withOpacity(.8),
       body: Stack(
         children: [
           if (_controller.value.isInitialized)
@@ -139,224 +236,310 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           Container(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Column(
-                    children: [
-                      SizedBox(height: 50),
-                      Image.asset(
-                        "assets/flipnsort-nonbe.png",
-                        height: 120,
-                      ),
-                      Text(
-                        "Flip N' Sort",
-                        style: TextStyle(
-                          fontSize: 36,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        "Level $level",
-                        style: TextStyle(
-                          fontSize: 24,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (widget.gameType == "single")
-                    Container(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Column(
-                            children: [
-                              SizedBox(
-                                height: 20,
-                              ),
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.green,
-                                      width: 5,
-                                    ),
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      fit: BoxFit.cover,
-                                      image: NetworkImage(widget.singleAvatar),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.green.withOpacity(0.5),
-                                        blurRadius: 10,
-                                        spreadRadius: 2,
-                                      )
-                                    ]),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  if (widget.gameType == "multi")
-                    Container(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Column(
-                            children: [
-                              if (currentActivePlayer == "playerOne") ...[
-                                Text(
-                                  "Your Turn",
-                                  style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                              SizedBox(
-                                height: 3,
-                              ),
-                              Container(
-                                width: currentActivePlayer == "playerOne"
-                                    ? 90
-                                    : 80,
-                                height: currentActivePlayer == "playerOne"
-                                    ? 90
-                                    : 80,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: currentActivePlayer == "playerOne"
-                                        ? Colors.green
-                                        : Colors.transparent,
-                                    width: 5,
-                                  ),
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: NetworkImage(widget.playerOneAvatar),
-                                  ),
-                                  boxShadow: currentActivePlayer == "playerOne"
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.green.withOpacity(0.5),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
-                                          )
-                                        ]
-                                      : [],
-                                ),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              if (currentActivePlayer == "playerTwo") ...[
-                                Text(
-                                  "Your Turn",
-                                  style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                              SizedBox(
-                                height: 3,
-                              ),
-                              Container(
-                                width: currentActivePlayer == "playerTwo"
-                                    ? 90
-                                    : 80,
-                                height: currentActivePlayer == "playerTwo"
-                                    ? 90
-                                    : 80,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: currentActivePlayer == "playerTwo"
-                                        ? Colors.green
-                                        : Colors.transparent,
-                                    width: 5,
-                                  ),
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: NetworkImage(widget.playerTwoAvatar),
-                                  ),
-                                  boxShadow: currentActivePlayer == "playerTwo"
-                                      ? [
-                                          BoxShadow(
-                                            color:
-                                                Colors.green.withOpacity(0.5),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
-                                          )
-                                        ]
-                                      : [],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  SizedBox(height: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("LEVEL $level",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    )),
+                const SizedBox(height: 16),
+                if (widget.gameType == "single")
                   Container(
-                    width: MediaQuery.of(context).size.width,
-                    margin: EdgeInsets.only(left: 16, right: 16),
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: GridView.builder(
-                      physics: NeverScrollableScrollPhysics(),
-                      padding: EdgeInsets.zero,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: gridSize,
-                      ),
-                      itemCount: numbers.length,
-                      itemBuilder: (context, index) {
-                        return GestureDetector(
-                          onTap: () => _onCardTap(index),
-                          child: AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 500),
-                            transitionBuilder: (child, animation) {
-                              return RotationYTransition(
-                                child: child,
-                                animation: animation,
-                              );
-                            },
-                            child: isOpen[index]
-                                ? _buildCardFront(index)
-                                : _buildCardBack(),
-                          ),
-                        );
-                      },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.green,
+                                    width: 5,
+                                  ),
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    fit: BoxFit.cover,
+                                    image: NetworkImage(widget.singleAvatar),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.green.withOpacity(0.5),
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                    )
+                                  ]),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                if (widget.gameType == "multi")
+                  Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            if (currentActivePlayer == "playerOne") ...[
+                              const Text(
+                                "Your Turn",
+                                style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                            const SizedBox(
+                              height: 3,
+                            ),
+                            Container(
+                              width:
+                                  currentActivePlayer == "playerOne" ? 90 : 80,
+                              height:
+                                  currentActivePlayer == "playerOne" ? 90 : 80,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: currentActivePlayer == "playerOne"
+                                      ? Colors.green
+                                      : Colors.transparent,
+                                  width: 5,
+                                ),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: NetworkImage(widget.playerOneAvatar),
+                                ),
+                                boxShadow: currentActivePlayer == "playerOne"
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.green.withOpacity(0.5),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        )
+                                      ]
+                                    : [],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            if (currentActivePlayer == "playerTwo") ...[
+                              const Text(
+                                "Your Turn",
+                                style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                            const SizedBox(
+                              height: 3,
+                            ),
+                            Container(
+                              width:
+                                  currentActivePlayer == "playerTwo" ? 90 : 80,
+                              height:
+                                  currentActivePlayer == "playerTwo" ? 90 : 80,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: currentActivePlayer == "playerTwo"
+                                      ? Colors.green
+                                      : Colors.transparent,
+                                  width: 5,
+                                ),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: NetworkImage(widget.playerTwoAvatar),
+                                ),
+                                boxShadow: currentActivePlayer == "playerTwo"
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.green.withOpacity(0.5),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        )
+                                      ]
+                                    : [],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 36),
+                Container(
+                  width: MediaQuery.of(context).size.width,
+                  margin: const EdgeInsets.only(left: 16, right: 16),
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: gridSize,
+                    ),
+                    itemCount: numbers.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () => _onCardTap(index),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          transitionBuilder: (child, animation) {
+                            return RotationYTransition(
+                              animation: animation,
+                              child: child,
+                            );
+                          },
+                          child: isOpen[index]
+                              ? _buildCardFront(index)
+                              : _buildCardBack(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
           Positioned(
-            bottom: 50,
+            bottom: 120,
+            right: 0,
+            left: 0,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () async {
+                    if (tipCount == 0) {
+                      await _showPurchaseModal();
+                    } else {
+                      for (int i = 0; i < numbers.length; i++) {
+                        if (numbers[i] == currentNumber && !isOpen[i]) {
+                          setState(() {
+                            tipCount--;
+
+                            isOpen[i] = true;
+                            currentNumber++;
+                          });
+                          SharedPreferences prefs =
+                              await SharedPreferences.getInstance();
+
+                          prefs.setInt('tipCount', tipCount);
+
+                          if (currentNumber == numbers.length) {
+                            Future.delayed(const Duration(seconds: 1), () {
+                              setState(() {
+                                showCong = true;
+                                if (soundEffect) {
+                                  audioPlayer.play(AssetSource("sucsess.mp3"));
+                                }
+                                interstitialAd?.show();
+
+                                level++;
+                                _initializeLevel();
+                                _saveLevel();
+                                Future.delayed(const Duration(seconds: 3), () {
+                                  setState(() {
+                                    showCong = false;
+                                  });
+                                });
+                              });
+                            });
+                          }
+                          return; // Bir kart açıldıktan sonra döngüyü sonlandır
+                        }
+                      }
+                    }
+                  },
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: tipCount == 0 ? Colors.redAccent : Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: tipCount == 0
+                          ? const Icon(
+                              Icons.shop,
+                              color: Colors.white,
+                            )
+                          : Text(
+                              "${tipCount}X",
+                              style: TextStyle(
+                                  color: tipCount == 0
+                                      ? Colors.white
+                                      : Colors.redAccent,
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 120,
             right: 10,
             child: GestureDetector(
               onTap: openSettings,
               child: Container(
                 width: 80,
                 height: 80,
-                child: Icon(
-                  Icons.settings,
-                  size: 40,
+                child: Image.asset(
+                  "assets/setting.png",
+                  height: 70,
                 ),
-                decoration:
-                    BoxDecoration(color: Colors.white, shape: BoxShape.circle),
               ),
+            ),
+          ),
+          Positioned(
+            bottom: 120,
+            left: 10,
+            child: GestureDetector(
+              onTap: () {
+                _controller.dispose();
+                Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => MainMenu()),
+                    (route) => false);
+              },
+              child: Container(
+                width: 80,
+                height: 80,
+                child: Image.asset(
+                  "assets/home.png",
+                  height: 70,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            child: Container(
+              color: Colors.transparent,
+              width: MediaQuery.of(context).size.width,
+              height: 100,
+              child: _bannerAd == null
+                  ? const SizedBox()
+                  : SizedBox(
+                      width: _bannerAd!.size.width.toDouble(),
+                      height: _bannerAd!.size.height.toDouble(),
+                      child: AdWidget(ad: _bannerAd!),
+                    ),
             ),
           ),
           if (showCong)
@@ -370,7 +553,7 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(
                     height: MediaQuery.of(context).size.height * 0.1,
                   ),
-                  Text(
+                  const Text(
                     "Congratulations",
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -380,7 +563,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   if (widget.gameType == "single")
-                    Text(
+                    const Text(
                       "\n You won the level",
                       textAlign: TextAlign.center,
                       style: TextStyle(
@@ -393,13 +576,13 @@ class _HomePageState extends State<HomePage> {
                     Text(
                       "\n ${currentActivePlayer == "playerOne" ? "Player 1" : "Player 2"} won the level",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  SizedBox(
+                  const SizedBox(
                     height: 16,
                   ),
                   Container(
@@ -433,8 +616,125 @@ class _HomePageState extends State<HomePage> {
                 ],
               ),
             ),
+          if (purchaseIsLoading)
+            Container(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              color: Colors.black.withOpacity(.8),
+              child: const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            )
         ],
       ),
+    );
+  }
+
+  Future<void> _handlePurchase() async {
+    setState(() {
+      purchaseIsLoading = true;
+    });
+    try {
+      // Satın alma işlemi başlat
+      await Future.delayed(Duration(seconds: 2)); // Simulating purchase delay
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+
+      setState(() {
+        tipCount = 3;
+        purchaseIsLoading = false;
+      });
+
+      prefs.setInt('tipCount', 3);
+      print("Satın alma başarılı!");
+    } catch (e) {
+      print("Satın alma hatası: $e");
+      setState(() {
+        purchaseIsLoading = false;
+      });
+    }
+  }
+
+  Future<void> _showAd() async {
+    _rewardedAd?.show(onUserEarnedReward: (x, y) {
+      print("Ödül kazanıldı");
+      setState(() {
+        tipCount = 3;
+      });
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setInt('tipCount', 3);
+      });
+    });
+  }
+
+  Future<void> _showPurchaseModal() async {
+    showDialog(
+      context: context,
+      barrierDismissible:
+          true, // Kullanıcının dışına dokunarak kapatabilmesi için
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20.0),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                      },
+                      child: Icon(
+                        Icons.close,
+                        color: Colors.black,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10.0),
+                Divider(),
+                SizedBox(height: 10.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showAd();
+                      },
+                      child: Image.asset(
+                        "assets/paid-media.png",
+                        height: 70,
+                      ),
+                    ),
+                    GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          _handlePurchase();
+                        },
+                        child: Image.asset(
+                          "assets/apple-pay.png",
+                          height: 80,
+                        )),
+                  ],
+                ),
+                SizedBox(height: 10.0),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -443,7 +743,7 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Settings"),
+          title: const Text("Settings"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -459,7 +759,7 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: Text(
                   "Sound Effect ${soundEffect ? "ON" : "OFF"}",
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12),
@@ -482,7 +782,7 @@ class _HomePageState extends State<HomePage> {
                 },
                 child: Text(
                   "Music ${_controller.value.volume > 0 ? "ON" : "OFF"}",
-                  style: TextStyle(
+                  style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12),
@@ -499,18 +799,7 @@ class _HomePageState extends State<HomePage> {
                       MaterialPageRoute(builder: (context) => MainMenu()),
                       (route) => false);
                 },
-                child: Text("Reset All Level"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _controller.dispose();
-                  Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (context) => MainMenu()),
-                      (route) => false);
-                },
-                child: Text("Return to Main Menu"),
+                child: const Text("Reset All Level"),
               ),
             ],
           ),
@@ -549,13 +838,16 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  bool isProcessing = false;
+
   void _onCardTap(int index) {
     if (soundEffect) {
       audioPlayer.play(AssetSource("flipcard.mp3"));
     }
 
-    if (!isOpen[index]) {
+    if (!isOpen[index] && !isProcessing) {
       if (numbers[index] == currentNumber) {
+        print("EVET İNDEX UYUYOR");
         setState(() {
           isOpen[index] = true;
           currentNumber++;
@@ -568,7 +860,6 @@ class _HomePageState extends State<HomePage> {
               if (soundEffect) {
                 audioPlayer.play(AssetSource("sucsess.mp3"));
               }
-
               interstitialAd?.show();
 
               level++;
@@ -583,13 +874,22 @@ class _HomePageState extends State<HomePage> {
           });
         }
       } else {
+        print("YANLIŞ KART");
         setState(() {
           isOpen[index] = true;
+          isProcessing = true; // İşlem devam ederken başka tıklamaları engelle
         });
-        Future.delayed(const Duration(seconds: 1), () {
-          setState(() => _resetGame());
+
+        Future.delayed(const Duration(milliseconds: 500), () {
+          setState(() {
+            _resetGame();
+            isProcessing =
+                false; // İşlem tamamlandıktan sonra tıklamaları yeniden aç
+          });
         });
       }
+    } else {
+      print("Zaten açık veya işlem devam ediyor");
     }
   }
 
