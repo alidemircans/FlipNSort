@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:FlipNSort/store_config.dart';
 import 'package:flutter/material.dart';
 import 'package:FlipNSort/main_menu.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
@@ -18,7 +19,7 @@ void main() async {
   } else if (Platform.isAndroid) {
     StoreConfig(
       store: StoreEnum.googlePlay,
-      apiKey: "",
+      apiKey: "goog_qbGqlSOhFCxLEuCfhUFQDNegVsd",
     );
   }
   await _configureSDK();
@@ -41,14 +42,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: "Flip N' Short",
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      child: MaterialApp(
+        title: "Flip N' Short",
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: MainMenu(),
       ),
-      home: MainMenu(),
     );
   }
 }

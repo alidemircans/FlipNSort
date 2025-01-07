@@ -43,6 +43,7 @@ dependencies:
   lottie: 
   mixpanel_flutter: 
   purchases_flutter: ^6.30.0
+  flutter_screenutil: 
   
 
 dev_dependencies:

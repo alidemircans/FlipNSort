@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:FlipNSort/helper/contants.dart';
 import 'package:FlipNSort/helper/mixpanel_manager.dart';
+import 'package:FlipNSort/main.dart';
 import 'package:FlipNSort/main_menu.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:lottie/lottie.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -83,19 +87,20 @@ class _HomePageState extends State<HomePage> {
         MediaQuery.sizeOf(context).width.truncate());
 
     setState(() {
+      print("BANNER ID :${bannerAdUnitId}");
       _bannerAd = BannerAd(
         adUnitId: bannerAdUnitId,
         request: const AdRequest(),
         size: adSize,
         listener: BannerAdListener(
-          // Called when an ad is successfully received. 
+          // Called when an ad is successfully received.
           onAdLoaded: (ad) {
             debugPrint('$ad loaded.');
             setState(() {});
           },
           // Called when an ad request failed.
           onAdFailedToLoad: (ad, err) {
-            debugPrint('BannerAd failed to load: $err');
+            debugPrint('BannerAd  failed to load: ıd : ${ad.adUnitId} $err');
             // Dispose the ad here to free resources.
             ad.dispose();
           },
@@ -237,15 +242,16 @@ class _HomePageState extends State<HomePage> {
             ),
           Container(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
+                32.h.verticalSpace,
                 Text("LEVEL $level",
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.bold,
                     )),
-                const SizedBox(height: 16),
+                8.h.verticalSpace,
                 if (widget.gameType == "single")
                   Container(
                     child: Row(
@@ -253,12 +259,10 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Column(
                           children: [
-                            const SizedBox(
-                              height: 20,
-                            ),
+                            8.h.verticalSpace,
                             Container(
-                              width: 80,
-                              height: 80,
+                              width: 40.w,
+                              height: 40.w,
                               decoration: BoxDecoration(
                                   border: Border.all(
                                     color: Colors.green,
@@ -298,20 +302,20 @@ class _HomePageState extends State<HomePage> {
                                     fontWeight: FontWeight.bold),
                               ),
                             ],
-                            const SizedBox(
-                              height: 3,
-                            ),
+                            3.h.verticalSpace,
                             Container(
-                              width:
-                                  currentActivePlayer == "playerOne" ? 90 : 80,
-                              height:
-                                  currentActivePlayer == "playerOne" ? 90 : 80,
+                              width: currentActivePlayer == "playerOne"
+                                  ? 50.w
+                                  : 40.w,
+                              height: currentActivePlayer == "playerOne"
+                                  ? 50.w
+                                  : 40.w,
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: currentActivePlayer == "playerOne"
                                       ? Colors.green
                                       : Colors.transparent,
-                                  width: 5,
+                                  width: 5.w,
                                 ),
                                 color: Colors.white,
                                 shape: BoxShape.circle,
@@ -342,14 +346,14 @@ class _HomePageState extends State<HomePage> {
                                     fontWeight: FontWeight.bold),
                               ),
                             ],
-                            const SizedBox(
-                              height: 3,
-                            ),
+                            3.h.verticalSpace,
                             Container(
-                              width:
-                                  currentActivePlayer == "playerTwo" ? 90 : 80,
-                              height:
-                                  currentActivePlayer == "playerTwo" ? 90 : 80,
+                              width: currentActivePlayer == "playerTwo"
+                                  ? 50.w
+                                  : 40.w,
+                              height: currentActivePlayer == "playerTwo"
+                                  ? 50.w
+                                  : 40.w,
                               decoration: BoxDecoration(
                                 border: Border.all(
                                   color: currentActivePlayer == "playerTwo"
@@ -379,11 +383,11 @@ class _HomePageState extends State<HomePage> {
                       ],
                     ),
                   ),
-                const SizedBox(height: 36),
+                12.h.verticalSpace,
                 Container(
-                  width: MediaQuery.of(context).size.width,
-                  margin: const EdgeInsets.only(left: 16, right: 16),
-                  height: MediaQuery.of(context).size.height * 0.6,
+                  width: 1.sw,
+                  height: .6.sh,
+                  padding: EdgeInsets.only(left: 8.w, right: 8.w),
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     padding: EdgeInsets.zero,
@@ -410,121 +414,124 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 120,
-            right: 0,
-            left: 0,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () async {
-                    if (tipCount == 0) {
-                      await _showPurchaseModal();
-                    } else {
-                      for (int i = 0; i < numbers.length; i++) {
-                        if (numbers[i] == currentNumber && !isOpen[i]) {
-                          setState(() {
-                            tipCount--;
+                12.h.verticalSpace,
+                Container(
+                  width: 1.sw,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          _controller.dispose();
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => MainMenu()),
+                              (route) => false);
+                        },
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          child: Image.asset(
+                            "assets/home.png",
+                            height: 70,
+                          ),
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          GestureDetector(
+                            onTap: () async {
+                              if (tipCount == 0) {
+                                await _showPurchaseModal();
+                              } else {
+                                for (int i = 0; i < numbers.length; i++) {
+                                  if (numbers[i] == currentNumber &&
+                                      !isOpen[i]) {
+                                    setState(() {
+                                      tipCount--;
 
-                            isOpen[i] = true;
-                            currentNumber++;
-                          });
-                          SharedPreferences prefs =
-                              await SharedPreferences.getInstance();
+                                      isOpen[i] = true;
+                                      currentNumber++;
+                                    });
+                                    SharedPreferences prefs =
+                                        await SharedPreferences.getInstance();
 
-                          prefs.setInt('tipCount', tipCount);
+                                    prefs.setInt('tipCount', tipCount);
 
-                          if (currentNumber == numbers.length) {
-                            Future.delayed(const Duration(seconds: 1), () {
-                              setState(() {
-                                showCong = true;
-                                if (soundEffect) {
-                                  audioPlayer.play(AssetSource("sucsess.mp3"));
+                                    if (currentNumber == numbers.length) {
+                                      Future.delayed(const Duration(seconds: 1),
+                                          () {
+                                        setState(() {
+                                          showCong = true;
+                                          if (soundEffect) {
+                                            audioPlayer.play(
+                                                AssetSource("sucsess.mp3"));
+                                          }
+                                          interstitialAd?.show();
+
+                                          level++;
+                                          _initializeLevel();
+                                          _saveLevel();
+                                          Future.delayed(
+                                              const Duration(seconds: 3), () {
+                                            setState(() {
+                                              showCong = false;
+                                            });
+                                          });
+                                        });
+                                      });
+                                    }
+                                    return; // Bir kart açıldıktan sonra döngüyü sonlandır
+                                  }
                                 }
-                                interstitialAd?.show();
-
-                                level++;
-                                _initializeLevel();
-                                _saveLevel();
-                                Future.delayed(const Duration(seconds: 3), () {
-                                  setState(() {
-                                    showCong = false;
-                                  });
-                                });
-                              });
-                            });
-                          }
-                          return; // Bir kart açıldıktan sonra döngüyü sonlandır
-                        }
-                      }
-                    }
-                  },
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: tipCount == 0 ? Colors.redAccent : Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: tipCount == 0
-                          ? const Icon(
-                              Icons.shop,
-                              color: Colors.white,
-                            )
-                          : Text(
-                              "${tipCount}X",
-                              style: TextStyle(
-                                  color: tipCount == 0
-                                      ? Colors.white
-                                      : Colors.redAccent,
-                                  fontSize: 36,
-                                  fontWeight: FontWeight.bold),
+                              }
+                            },
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: tipCount == 0
+                                    ? Colors.redAccent
+                                    : Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: tipCount == 0
+                                    ? const Icon(
+                                        Icons.shop,
+                                        color: Colors.white,
+                                      )
+                                    : Text(
+                                        "${tipCount}X",
+                                        style: TextStyle(
+                                            color: tipCount == 0
+                                                ? Colors.white
+                                                : Colors.redAccent,
+                                            fontSize: 36,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                              ),
                             ),
-                    ),
+                          ),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: openSettings,
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          child: Image.asset(
+                            "assets/setting.png",
+                            height: 70,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-          Positioned(
-            bottom: 120,
-            right: 10,
-            child: GestureDetector(
-              onTap: openSettings,
-              child: Container(
-                width: 80,
-                height: 80,
-                child: Image.asset(
-                  "assets/setting.png",
-                  height: 70,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 120,
-            left: 10,
-            child: GestureDetector(
-              onTap: () {
-                _controller.dispose();
-                Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => MainMenu()),
-                    (route) => false);
-              },
-              child: Container(
-                width: 80,
-                height: 80,
-                child: Image.asset(
-                  "assets/home.png",
-                  height: 70,
-                ),
-              ),
             ),
           ),
           Positioned(
@@ -582,12 +589,10 @@ class _HomePageState extends State<HomePage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  const SizedBox(
-                    height: 16,
-                  ),
+                  16.h.verticalSpace,
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 80.w,
+                    height: 80.w,
                     decoration: BoxDecoration(
                       border: Border.all(
                         color: Colors.transparent,
@@ -637,7 +642,7 @@ class _HomePageState extends State<HomePage> {
       purchaseIsLoading = true;
     });
     try {
-      // Satın alma işlemi başlat
+      Purchases.purchaseStoreProduct(products[0]);
       await Future.delayed(Duration(seconds: 2)); // Simulating purchase delay
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
@@ -724,12 +729,14 @@ class _HomePageState extends State<HomePage> {
                           _handlePurchase();
                         },
                         child: Image.asset(
-                          "assets/apple-pay.png",
-                          height: 80,
+                          Platform.isAndroid
+                              ? "assets/google-pay.png"
+                              : "assets/apple-pay.png",
+                          height: Platform.isAndroid ? 60.sp : 45.sp,
                         )),
                   ],
                 ),
-                SizedBox(height: 10.0),
+                8.h.verticalSpace,
               ],
             ),
           ),
@@ -818,8 +825,8 @@ class _HomePageState extends State<HomePage> {
       child: Center(
         child: Text(
           "${numbers[index] + 1}",
-          style: const TextStyle(
-            fontSize: 24,
+          style: TextStyle(
+            fontSize: 24.sp,
             color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
