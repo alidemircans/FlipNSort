@@ -196,11 +196,41 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _initializeLevel() {
+    if (countDown == 0) {
+      setState(() {
+        countDown = 6;
+      });
+    }
+
     int totalCells = calculateTotalCells(level);
     numbers = List.generate(totalCells, (index) => index);
     numbers.shuffle(Random());
-    isOpen = List.generate(totalCells, (index) => false);
+    isOpen = List.generate(totalCells, (index) => true);
     currentNumber = 0;
+
+    countDownAndCloseAll();
+  }
+
+  int countDown = 3;
+
+  countDownAndCloseAll() {
+    // Start countdown and update countDown value every second
+    for (int i = countDown; i >= 0; i--) {
+      Future.delayed(Duration(seconds: countDown - i), () {
+        setState(() {
+          countDown = i;
+        });
+
+        // Once countdown reaches 0, close all elements
+        if (i == 0) {
+          for (int j = 0; j < numbers.length; j++) {
+            setState(() {
+              isOpen[j] = false;
+            });
+          }
+        }
+      });
+    }
   }
 
   int calculateGridSize(int level) {
@@ -244,13 +274,16 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                32.h.verticalSpace,
-                Text("LEVEL $level",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                    )),
+                AppBar(
+                  backgroundColor: Colors.transparent,
+                  automaticallyImplyLeading: false,
+                  title: Text("LEVEL $level",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.bold,
+                      )),
+                ),
                 8.h.verticalSpace,
                 if (widget.gameType == "single")
                   Container(
@@ -384,9 +417,17 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 12.h.verticalSpace,
+                if (countDown > 0)
+                  Center(
+                    child: Text(
+                      "$countDown",
+                      style: TextStyle(color: Colors.white, fontSize: 64),
+                    ),
+                  ),
+                12.h.verticalSpace,
                 Container(
                   width: 1.sw,
-                  height: .6.sh,
+                  height: .5.sh,
                   padding: EdgeInsets.only(left: 8.w, right: 8.w),
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
@@ -463,23 +504,24 @@ class _HomePageState extends State<HomePage> {
                                     if (currentNumber == numbers.length) {
                                       Future.delayed(const Duration(seconds: 1),
                                           () {
-                                        setState(() {
+                                        setState(() async {
                                           showCong = true;
                                           if (soundEffect) {
                                             audioPlayer.play(
                                                 AssetSource("sucsess.mp3"));
                                           }
-                                          interstitialAd?.show();
+                                          await interstitialAd?.show();
 
                                           level++;
-                                          _initializeLevel();
-                                          _saveLevel();
-                                          Future.delayed(
+
+                                          await Future.delayed(
                                               const Duration(seconds: 3), () {
                                             setState(() {
                                               showCong = false;
                                             });
                                           });
+                                          _initializeLevel();
+                                          _saveLevel();
                                         });
                                       });
                                     }
@@ -848,6 +890,7 @@ class _HomePageState extends State<HomePage> {
   bool isProcessing = false;
 
   void _onCardTap(int index) {
+    if (countDown > 0) return;
     if (soundEffect) {
       audioPlayer.play(AssetSource("flipcard.mp3"));
     }
