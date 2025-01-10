@@ -1,3 +1,4 @@
+import 'package:FlipNSort/core/custom_debug_print.dart';
 import 'package:mixpanel_flutter/mixpanel_flutter.dart';
 
 class MixpanelManager {
@@ -17,7 +18,8 @@ class MixpanelManager {
   }
 
   sendAnalyticToMixPanel(String eventName, {Map<String, dynamic>? properties}) {
-    print("sendAnalyticToMixPanel: $eventName, properties: $properties");
+    customDebugPrint(
+        "sendAnalyticToMixPanel: $eventName, properties: $properties");
     _mixpanel?.track(eventName, properties: properties);
   }
 }

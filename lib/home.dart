@@ -1,8 +1,10 @@
+// ignore_for_file: must_be_immutable
+
 import 'dart:io';
 
+import 'package:FlipNSort/core/custom_debug_print.dart';
 import 'package:FlipNSort/helper/contants.dart';
 import 'package:FlipNSort/helper/mixpanel_manager.dart';
-import 'package:FlipNSort/main.dart';
 import 'package:FlipNSort/main_menu.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
@@ -87,7 +89,7 @@ class _HomePageState extends State<HomePage> {
         MediaQuery.sizeOf(context).width.truncate());
 
     setState(() {
-      print("BANNER ID :${bannerAdUnitId}");
+      customDebugPrint("BANNER ID :$bannerAdUnitId");
       _bannerAd = BannerAd(
         adUnitId: bannerAdUnitId,
         request: const AdRequest(),
@@ -100,7 +102,8 @@ class _HomePageState extends State<HomePage> {
           },
           // Called when an ad request failed.
           onAdFailedToLoad: (ad, err) {
-            debugPrint('BannerAd  failed to load: ıd : ${ad.adUnitId} $err');
+            customDebugPrint(
+                'BannerAd  failed to load: ıd : ${ad.adUnitId} $err');
             // Dispose the ad here to free resources.
             ad.dispose();
           },
@@ -112,7 +115,7 @@ class _HomePageState extends State<HomePage> {
   firstAppOpen() async {
     await SharedPreferences.getInstance().then((prefs) {
       bool? firstAppOpen = prefs.getBool('firstAppOpen');
-      print("firstAppOpen $firstAppOpen");
+      customDebugPrint("firstAppOpen $firstAppOpen");
       if (firstAppOpen == null) {
         prefs.setBool('firstAppOpen', false);
         prefs.setInt('tipCount', 3);
@@ -123,7 +126,7 @@ class _HomePageState extends State<HomePage> {
           tipCount = 3;
         });
       } else {
-        print("APP OPENED BEFORE");
+        customDebugPrint("APP OPENED BEFORE");
         setState(() {
           tipCount = prefs.getInt('tipCount') ?? 0;
         });
@@ -171,13 +174,13 @@ class _HomePageState extends State<HomePage> {
         adLoadCallback: InterstitialAdLoadCallback(
           // Called when an ad is successfully received.
           onAdLoaded: (ad) {
-            debugPrint('$ad loaded.');
+            customDebugPrint('$ad loaded.');
             // Keep a reference to the ad so you can show it later.
             interstitialAd = ad;
           },
           // Called when an ad request failed.
           onAdFailedToLoad: (LoadAdError error) {
-            debugPrint('InterstitialAd failed to load: $error');
+            customDebugPrint('InterstitialAd failed to load: $error');
           },
         ));
   }
@@ -270,311 +273,329 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-          Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                AppBar(
-                  backgroundColor: Colors.transparent,
-                  automaticallyImplyLeading: false,
-                  title: Text("LEVEL $level",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18.sp,
-                        fontWeight: FontWeight.bold,
-                      )),
-                ),
-                8.h.verticalSpace,
-                if (widget.gameType == "single")
-                  Container(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+          Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                automaticallyImplyLeading: false,
+                title: Text("LEVEL $level",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                    )),
+              ),
+              8.h.verticalSpace,
+              if (widget.gameType == "single")
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
                       children: [
-                        Column(
-                          children: [
-                            8.h.verticalSpace,
-                            Container(
-                              width: 40.w,
-                              height: 40.w,
-                              decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.green,
-                                    width: 5,
-                                  ),
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: NetworkImage(widget.singleAvatar),
-                                  ),
-                                  boxShadow: [
+                        8.h.verticalSpace,
+                        Container(
+                          width: 40.w,
+                          height: 40.w,
+                          decoration: BoxDecoration(
+                              border: Border.all(
+                                color: Colors.green,
+                                width: 5,
+                              ),
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              image: DecorationImage(
+                                fit: BoxFit.cover,
+                                image: NetworkImage(widget.singleAvatar),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.5),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                )
+                              ]),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              if (widget.gameType == "multi")
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        if (currentActivePlayer == "playerOne") ...[
+                          const Text(
+                            "Your Turn",
+                            style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                        3.h.verticalSpace,
+                        Container(
+                          width:
+                              currentActivePlayer == "playerOne" ? 50.w : 40.w,
+                          height:
+                              currentActivePlayer == "playerOne" ? 50.w : 40.w,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: currentActivePlayer == "playerOne"
+                                  ? Colors.green
+                                  : Colors.transparent,
+                              width: 5.w,
+                            ),
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(widget.playerOneAvatar),
+                            ),
+                            boxShadow: currentActivePlayer == "playerOne"
+                                ? [
                                     BoxShadow(
                                       color: Colors.green.withOpacity(0.5),
                                       blurRadius: 10,
                                       spreadRadius: 2,
                                     )
-                                  ]),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                if (widget.gameType == "multi")
-                  Container(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Column(
-                          children: [
-                            if (currentActivePlayer == "playerOne") ...[
-                              const Text(
-                                "Your Turn",
-                                style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                            3.h.verticalSpace,
-                            Container(
-                              width: currentActivePlayer == "playerOne"
-                                  ? 50.w
-                                  : 40.w,
-                              height: currentActivePlayer == "playerOne"
-                                  ? 50.w
-                                  : 40.w,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: currentActivePlayer == "playerOne"
-                                      ? Colors.green
-                                      : Colors.transparent,
-                                  width: 5.w,
-                                ),
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  fit: BoxFit.cover,
-                                  image: NetworkImage(widget.playerOneAvatar),
-                                ),
-                                boxShadow: currentActivePlayer == "playerOne"
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.green.withOpacity(0.5),
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
-                                        )
-                                      ]
-                                    : [],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            if (currentActivePlayer == "playerTwo") ...[
-                              const Text(
-                                "Your Turn",
-                                style: TextStyle(
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
-                            3.h.verticalSpace,
-                            Container(
-                              width: currentActivePlayer == "playerTwo"
-                                  ? 50.w
-                                  : 40.w,
-                              height: currentActivePlayer == "playerTwo"
-                                  ? 50.w
-                                  : 40.w,
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: currentActivePlayer == "playerTwo"
-                                      ? Colors.green
-                                      : Colors.transparent,
-                                  width: 5,
-                                ),
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  fit: BoxFit.cover,
-                                  image: NetworkImage(widget.playerTwoAvatar),
-                                ),
-                                boxShadow: currentActivePlayer == "playerTwo"
-                                    ? [
-                                        BoxShadow(
-                                          color: Colors.green.withOpacity(0.5),
-                                          blurRadius: 10,
-                                          spreadRadius: 2,
-                                        )
-                                      ]
-                                    : [],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                12.h.verticalSpace,
-                if (countDown > 0)
-                  Center(
-                    child: Text(
-                      "$countDown",
-                      style: TextStyle(color: Colors.white, fontSize: 64),
-                    ),
-                  ),
-                12.h.verticalSpace,
-                Container(
-                  width: 1.sw,
-                  height: .5.sh,
-                  padding: EdgeInsets.only(left: 8.w, right: 8.w),
-                  child: GridView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.zero,
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: gridSize,
-                    ),
-                    itemCount: numbers.length,
-                    itemBuilder: (context, index) {
-                      return GestureDetector(
-                        onTap: () => _onCardTap(index),
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 500),
-                          transitionBuilder: (child, animation) {
-                            return RotationYTransition(
-                              animation: animation,
-                              child: child,
-                            );
-                          },
-                          child: isOpen[index]
-                              ? _buildCardFront(index)
-                              : _buildCardBack(),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                12.h.verticalSpace,
-                Container(
-                  width: 1.sw,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          _controller.dispose();
-                          Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => MainMenu()),
-                              (route) => false);
-                        },
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          child: Image.asset(
-                            "assets/home.png",
-                            height: 70,
+                                  ]
+                                : [],
                           ),
                         ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: () async {
-                              if (tipCount == 0) {
-                                await _showPurchaseModal();
-                              } else {
-                                for (int i = 0; i < numbers.length; i++) {
-                                  if (numbers[i] == currentNumber &&
-                                      !isOpen[i]) {
-                                    setState(() {
-                                      tipCount--;
-
-                                      isOpen[i] = true;
-                                      currentNumber++;
-                                    });
-                                    SharedPreferences prefs =
-                                        await SharedPreferences.getInstance();
-
-                                    prefs.setInt('tipCount', tipCount);
-
-                                    if (currentNumber == numbers.length) {
-                                      Future.delayed(const Duration(seconds: 1),
-                                          () {
-                                        setState(() async {
-                                          showCong = true;
-                                          if (soundEffect) {
-                                            audioPlayer.play(
-                                                AssetSource("sucsess.mp3"));
-                                          }
-                                          await interstitialAd?.show();
-
-                                          level++;
-
-                                          await Future.delayed(
-                                              const Duration(seconds: 3), () {
-                                            setState(() {
-                                              showCong = false;
-                                            });
-                                          });
-                                          _initializeLevel();
-                                          _saveLevel();
-                                        });
-                                      });
-                                    }
-                                    return; // Bir kart açıldıktan sonra döngüyü sonlandır
-                                  }
-                                }
-                              }
-                            },
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: tipCount == 0
-                                    ? Colors.redAccent
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: tipCount == 0
-                                    ? const Icon(
-                                        Icons.shop,
-                                        color: Colors.white,
-                                      )
-                                    : Text(
-                                        "${tipCount}X",
-                                        style: TextStyle(
-                                            color: tipCount == 0
-                                                ? Colors.white
-                                                : Colors.redAccent,
-                                            fontSize: 36,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                              ),
-                            ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        if (currentActivePlayer == "playerTwo") ...[
+                          const Text(
+                            "Your Turn",
+                            style: TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold),
                           ),
                         ],
-                      ),
-                      GestureDetector(
-                        onTap: openSettings,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          child: Image.asset(
-                            "assets/setting.png",
-                            height: 70,
+                        3.h.verticalSpace,
+                        Container(
+                          width:
+                              currentActivePlayer == "playerTwo" ? 50.w : 40.w,
+                          height:
+                              currentActivePlayer == "playerTwo" ? 50.w : 40.w,
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: currentActivePlayer == "playerTwo"
+                                  ? Colors.green
+                                  : Colors.transparent,
+                              width: 5,
+                            ),
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            image: DecorationImage(
+                              fit: BoxFit.cover,
+                              image: NetworkImage(widget.playerTwoAvatar),
+                            ),
+                            boxShadow: currentActivePlayer == "playerTwo"
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.green.withOpacity(0.5),
+                                      blurRadius: 10,
+                                      spreadRadius: 2,
+                                    )
+                                  ]
+                                : [],
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                  ],
+                ),
+              12.h.verticalSpace,
+              if (countDown > 0)
+                Center(
+                  child: Text(
+                    "$countDown",
+                    style: const TextStyle(color: Colors.white, fontSize: 64),
                   ),
                 ),
-              ],
-            ),
+              12.h.verticalSpace,
+              Container(
+                width: 1.sw,
+                height: .5.sh,
+                padding: EdgeInsets.only(left: 8.w, right: 8.w),
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: gridSize,
+                  ),
+                  itemCount: numbers.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () => _onCardTap(index),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 500),
+                        transitionBuilder: (child, animation) {
+                          return RotationYTransition(
+                            animation: animation,
+                            child: child,
+                          );
+                        },
+                        child: isOpen[index]
+                            ? _buildCardFront(index)
+                            : _buildCardBack(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              12.h.verticalSpace,
+              SizedBox(
+                width: 1.sw,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        MixpanelManager().sendAnalyticToMixPanel(
+                            "BackToMainButtonClicked",
+                            properties: {});
+
+                        _controller.dispose();
+                        Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MainMenu()),
+                            (route) => false);
+                      },
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: Image.asset(
+                          "assets/home.png",
+                          height: 70,
+                        ),
+                      ),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            if (tipCount == 0) {
+                              MixpanelManager().sendAnalyticToMixPanel(
+                                  "PurchaseModalOpened",
+                                  properties: {
+                                    "tip": tipCount,
+                                  });
+
+                              await _showPurchaseModal();
+                            } else {
+                              for (int i = 0; i < numbers.length; i++) {
+                                if (numbers[i] == currentNumber && !isOpen[i]) {
+                                  setState(() {
+                                    MixpanelManager().sendAnalyticToMixPanel(
+                                        "TipDecremented",
+                                        properties: {
+                                          "tip": tipCount,
+                                        });
+                                    tipCount--;
+
+                                    isOpen[i] = true;
+                                    currentNumber++;
+                                  });
+                                  SharedPreferences prefs =
+                                      await SharedPreferences.getInstance();
+
+                                  prefs.setInt('tipCount', tipCount);
+
+                                  if (currentNumber == numbers.length) {
+                                    Future.delayed(const Duration(seconds: 1),
+                                        () {
+                                      setState(() async {
+                                        showCong = true;
+                                        if (soundEffect) {
+                                          audioPlayer
+                                              .play(AssetSource("sucsess.mp3"));
+                                        }
+
+                                        MixpanelManager()
+                                            .sendAnalyticToMixPanel(
+                                                "GameCompletedWithTip",
+                                                properties: {
+                                              "tip": tipCount,
+                                            });
+
+                                        await interstitialAd?.show();
+
+                                        level++;
+
+                                        await Future.delayed(
+                                            const Duration(seconds: 3), () {
+                                          setState(() {
+                                            showCong = false;
+                                          });
+                                        });
+                                        _initializeLevel();
+                                        _saveLevel();
+                                      });
+                                    });
+                                  }
+                                  return; // Bir kart açıldıktan sonra döngüyü sonlandır
+                                }
+                              }
+                            }
+                          },
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: tipCount == 0
+                                  ? Colors.redAccent
+                                  : Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: tipCount == 0
+                                  ? const Icon(
+                                      Icons.shop,
+                                      color: Colors.white,
+                                    )
+                                  : Text(
+                                      "${tipCount}X",
+                                      style: TextStyle(
+                                          color: tipCount == 0
+                                              ? Colors.white
+                                              : Colors.redAccent,
+                                          fontSize: 36,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        MixpanelManager().sendAnalyticToMixPanel(
+                          "SettingsClicked",
+                        );
+
+                        openSettings();
+                      },
+                      child: SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: Image.asset(
+                          "assets/setting.png",
+                          height: 70,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
           Positioned(
             bottom: 0,
@@ -685,7 +706,8 @@ class _HomePageState extends State<HomePage> {
     });
     try {
       Purchases.purchaseStoreProduct(products[0]);
-      await Future.delayed(Duration(seconds: 2)); // Simulating purchase delay
+      await Future.delayed(
+          const Duration(seconds: 2)); // Simulating purchase delay
       SharedPreferences prefs = await SharedPreferences.getInstance();
 
       setState(() {
@@ -694,9 +716,9 @@ class _HomePageState extends State<HomePage> {
       });
 
       prefs.setInt('tipCount', 3);
-      print("Satın alma başarılı!");
+      customDebugPrint("Satın alma başarılı!");
     } catch (e) {
-      print("Satın alma hatası: $e");
+      customDebugPrint("Satın alma hatası: $e");
       setState(() {
         purchaseIsLoading = false;
       });
@@ -705,7 +727,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _showAd() async {
     _rewardedAd?.show(onUserEarnedReward: (x, y) {
-      print("Ödül kazanıldı");
+      customDebugPrint("Ödül kazanıldı");
       setState(() {
         tipCount = 3;
       });
@@ -726,7 +748,7 @@ class _HomePageState extends State<HomePage> {
             borderRadius: BorderRadius.circular(20.0),
           ),
           child: Container(
-            padding: EdgeInsets.all(20.0),
+            padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20.0),
               color: Colors.white,
@@ -739,9 +761,13 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     GestureDetector(
                       onTap: () {
+                        MixpanelManager().sendAnalyticToMixPanel(
+                          "PurchaseModalCloseClicked",
+                        );
+
                         Navigator.pop(context);
                       },
-                      child: Icon(
+                      child: const Icon(
                         Icons.close,
                         color: Colors.black,
                         size: 24,
@@ -749,14 +775,18 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 10.0),
-                Divider(),
-                SizedBox(height: 10.0),
+                const SizedBox(height: 10.0),
+                const Divider(),
+                const SizedBox(height: 10.0),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     GestureDetector(
                       onTap: () {
+                        MixpanelManager().sendAnalyticToMixPanel(
+                          "PurchaseModalAdClicked",
+                        );
+
                         Navigator.pop(context);
                         _showAd();
                       },
@@ -767,6 +797,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                     GestureDetector(
                         onTap: () {
+                          MixpanelManager().sendAnalyticToMixPanel(
+                              "PurchaseModalPurchaseClicked",
+                              properties: {
+                                "platform": Platform.isIOS ? "ios" : "android"
+                              });
                           Navigator.pop(context);
                           _handlePurchase();
                         },
@@ -805,6 +840,9 @@ class _HomePageState extends State<HomePage> {
                   setState(() {
                     soundEffect = !soundEffect;
                   });
+                  MixpanelManager().sendAnalyticToMixPanel(
+                      "SoundEfffectOnOffClicked",
+                      properties: {"soundEffect": "$soundEffect"});
                 },
                 child: Text(
                   "Sound Effect ${soundEffect ? "ON" : "OFF"}",
@@ -828,6 +866,11 @@ class _HomePageState extends State<HomePage> {
                       _controller.setVolume(0.3);
                     }
                   });
+
+                  MixpanelManager()
+                      .sendAnalyticToMixPanel("MusicOnOffClicked", properties: {
+                    "music": _controller.value.volume > 0 ? "Muted" : "Opened"
+                  });
                 },
                 child: Text(
                   "Music ${_controller.value.volume > 0 ? "ON" : "OFF"}",
@@ -838,15 +881,22 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   Navigator.pop(context);
                   _resetAllLevel();
                   _controller.dispose();
 
                   Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => MainMenu()),
+                      MaterialPageRoute(builder: (context) => const MainMenu()),
                       (route) => false);
+
+                  SharedPreferences prefs =
+                      await SharedPreferences.getInstance();
+
+                  MixpanelManager().sendAnalyticToMixPanel(
+                      "ResetAllLevelClicked",
+                      properties: {"level": prefs.getInt('level')});
                 },
                 child: const Text("Reset All Level"),
               ),
@@ -897,7 +947,7 @@ class _HomePageState extends State<HomePage> {
 
     if (!isOpen[index] && !isProcessing) {
       if (numbers[index] == currentNumber) {
-        print("EVET İNDEX UYUYOR");
+        customDebugPrint("EVET İNDEX UYUYOR");
         setState(() {
           isOpen[index] = true;
           currentNumber++;
@@ -924,7 +974,7 @@ class _HomePageState extends State<HomePage> {
           });
         }
       } else {
-        print("YANLIŞ KART");
+        customDebugPrint("YANLIŞ KART");
         setState(() {
           isOpen[index] = true;
           isProcessing = true; // İşlem devam ederken başka tıklamaları engelle
@@ -939,7 +989,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } else {
-      print("Zaten açık veya işlem devam ediyor");
+      customDebugPrint("Zaten açık veya işlem devam ediyor");
     }
   }
 

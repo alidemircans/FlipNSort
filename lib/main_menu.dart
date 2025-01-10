@@ -1,11 +1,15 @@
+import 'dart:io';
+
+import 'package:FlipNSort/core/custom_debug_print.dart';
 import 'package:FlipNSort/helper/mixpanel_manager.dart';
 import 'package:FlipNSort/home.dart';
-import 'package:FlipNSort/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 
 class MainMenu extends StatefulWidget {
+  const MainMenu({super.key});
+
   @override
   State<MainMenu> createState() => _MainMenuState();
 }
@@ -34,8 +38,6 @@ class _MainMenuState extends State<MainMenu> {
 
   String selectedPlayer = "playerOne";
 
- 
-
   changePlayer(String player) {
     setState(() {
       selectedPlayer = player;
@@ -47,20 +49,21 @@ class _MainMenuState extends State<MainMenu> {
 
     MixpanelManager().sendAnalyticToMixPanel("APP_OPENED", properties: {
       "app_opened": "true",
+      "platform": Platform.isIOS ? "ios" : "android"
     });
   }
 
   selectSingleUserAvatar(String url) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('singleAvatar', url);
-    print("KAYIT EDİLDİ :$url");
+    customDebugPrint("KAYIT EDİLDİ :$url");
   }
 
   selectMultiUserAvatar(String playerOne, String playerTwo) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('playerOne', playerOne);
     await prefs.setString('playerTwo', playerTwo);
-    print("KAYIT EDİLDİ :$playerOne - $playerTwo");
+    customDebugPrint("KAYIT EDİLDİ :$playerOne - $playerTwo");
   }
 
   @override
@@ -91,7 +94,7 @@ class _MainMenuState extends State<MainMenu> {
         playerOne = prefs.getString('playerOne') ?? "";
         playerTwo = prefs.getString('playerTwo') ?? "";
 
-        print(singleAvatar);
+        customDebugPrint(singleAvatar);
       });
     });
   }
@@ -129,7 +132,7 @@ class _MainMenuState extends State<MainMenu> {
                         "assets/flipnsort-nonbe.png",
                         height: 120,
                       ),
-                      Text(
+                      const Text(
                         "Flip N' Sort",
                         style: TextStyle(
                           fontSize: 36,
@@ -139,13 +142,13 @@ class _MainMenuState extends State<MainMenu> {
                       ),
                     ],
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 36,
                   ),
                   if (gameType != "") ...[
                     Column(
                       children: [
-                        Text(
+                        const Text(
                           "Choose an Avatar",
                           style: TextStyle(
                             color: Colors.white,
@@ -154,14 +157,19 @@ class _MainMenuState extends State<MainMenu> {
                           ),
                         ),
                         if (gameType == "multi")
-                          Container(
+                          SizedBox(
                             width: MediaQuery.of(context).size.width,
                             height: 60,
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 GestureDetector(
-                                  onTap: () => changePlayer("playerOne"),
+                                  onTap: () {
+                                    changePlayer("playerOne");
+                                    MixpanelManager().sendAnalyticToMixPanel(
+                                      "MultiPlayerPlayer1Clicked",
+                                    );
+                                  },
                                   child: Container(
                                     width: 120,
                                     height: 40,
@@ -171,16 +179,21 @@ class _MainMenuState extends State<MainMenu> {
                                           : Colors.white,
                                       borderRadius: BorderRadius.circular(100),
                                     ),
-                                    child: Center(
+                                    child: const Center(
                                       child: Text(
                                         "Player 1",
                                       ),
                                     ),
                                   ),
                                 ),
-                                SizedBox(width: 20),
+                                const SizedBox(width: 20),
                                 GestureDetector(
-                                  onTap: () => changePlayer("playerTwo"),
+                                  onTap: () {
+                                    MixpanelManager().sendAnalyticToMixPanel(
+                                      "MultiPlayerPlayer2Clicked",
+                                    );
+                                    changePlayer("playerTwo");
+                                  },
                                   child: Container(
                                     width: 120,
                                     height: 40,
@@ -190,7 +203,7 @@ class _MainMenuState extends State<MainMenu> {
                                           : Colors.white,
                                       borderRadius: BorderRadius.circular(100),
                                     ),
-                                    child: Center(
+                                    child: const Center(
                                       child: Text(
                                         "Player 2",
                                       ),
@@ -200,11 +213,11 @@ class _MainMenuState extends State<MainMenu> {
                               ],
                             ),
                           ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         Container(
                           width: MediaQuery.of(context).size.width,
                           height: 500,
-                          margin: EdgeInsets.only(left: 16, right: 16),
+                          margin: const EdgeInsets.only(left: 16, right: 16),
                           child: GridView.builder(
                             padding: EdgeInsets.zero,
                             itemCount: avatars.length,
@@ -274,6 +287,11 @@ class _MainMenuState extends State<MainMenu> {
                               selectSingleUserAvatar(singleAvatar);
 
                               if (singleAvatar != "") {
+                                MixpanelManager().sendAnalyticToMixPanel(
+                                    "SingleUserAvatarSelected",
+                                    properties: {
+                                      "avatar": singleAvatar,
+                                    });
                                 _controller.dispose();
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
@@ -290,6 +308,12 @@ class _MainMenuState extends State<MainMenu> {
                               selectMultiUserAvatar(playerOne, playerTwo);
 
                               if (playerOne != "" && playerTwo != "") {
+                                MixpanelManager().sendAnalyticToMixPanel(
+                                    "MultiUserAvatarSelected",
+                                    properties: {
+                                      "player1": playerOne,
+                                      "player2": playerTwo
+                                    });
                                 _controller.dispose();
                                 Navigator.push(context,
                                     MaterialPageRoute(builder: (context) {
@@ -310,7 +334,7 @@ class _MainMenuState extends State<MainMenu> {
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(100),
                             ),
-                            child: Center(
+                            child: const Center(
                               child: Text("START GAME",
                                   style: TextStyle(
                                     color: Colors.white,
@@ -328,7 +352,7 @@ class _MainMenuState extends State<MainMenu> {
                         setState(() {
                           MixpanelManager()
                               .sendAnalyticToMixPanel("GameType", properties: {
-                            "type": "signle",
+                            "type": "single",
                           });
                           gameType = "single";
                         });
@@ -340,7 +364,7 @@ class _MainMenuState extends State<MainMenu> {
                           color: Colors.deepPurpleAccent,
                           borderRadius: BorderRadius.circular(100),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -359,7 +383,7 @@ class _MainMenuState extends State<MainMenu> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     GestureDetector(
                       onTap: () {
                         MixpanelManager()
@@ -377,7 +401,7 @@ class _MainMenuState extends State<MainMenu> {
                           color: Colors.deepOrangeAccent,
                           borderRadius: BorderRadius.circular(100),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
@@ -396,7 +420,7 @@ class _MainMenuState extends State<MainMenu> {
                         ),
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                   ],
                 ],
               ),
@@ -410,13 +434,15 @@ class _MainMenuState extends State<MainMenu> {
 
 // Ayarlar Ekranı
 class SettingsScreen extends StatelessWidget {
+  const SettingsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ayarlar'),
+        title: const Text('Ayarlar'),
       ),
-      body: Center(
+      body: const Center(
         child: Text('Ayarlar Sayfası'),
       ),
     );
