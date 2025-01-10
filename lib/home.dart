@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
   getInAppProducts() async {
     products = await Purchases.getProducts(
       [
-        "3can",
+        Platform.isAndroid ? "can" : "3can",
       ],
     );
     setState(() {});
@@ -199,41 +199,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _initializeLevel() {
-    if (countDown == 0) {
-      setState(() {
-        countDown = 6;
-      });
-    }
-
     int totalCells = calculateTotalCells(level);
     numbers = List.generate(totalCells, (index) => index);
     numbers.shuffle(Random());
-    isOpen = List.generate(totalCells, (index) => true);
+    isOpen = List.generate(totalCells, (index) => false);
     currentNumber = 0;
-
-    countDownAndCloseAll();
-  }
-
-  int countDown = 3;
-
-  countDownAndCloseAll() {
-    // Start countdown and update countDown value every second
-    for (int i = countDown; i >= 0; i--) {
-      Future.delayed(Duration(seconds: countDown - i), () {
-        setState(() {
-          countDown = i;
-        });
-
-        // Once countdown reaches 0, close all elements
-        if (i == 0) {
-          for (int j = 0; j < numbers.length; j++) {
-            setState(() {
-              isOpen[j] = false;
-            });
-          }
-        }
-      });
-    }
   }
 
   int calculateGridSize(int level) {
@@ -360,8 +330,166 @@ class _HomePageState extends State<HomePage> {
                                       blurRadius: 10,
                                       spreadRadius: 2,
                                     )
+<<<<<<< Updated upstream
                                   ]
                                 : [],
+=======
+                                  ]),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                if (widget.gameType == "multi")
+                  Container(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            if (currentActivePlayer == "playerOne") ...[
+                              const Text(
+                                "Your Turn",
+                                style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                            3.h.verticalSpace,
+                            Container(
+                              width: currentActivePlayer == "playerOne"
+                                  ? 50.w
+                                  : 40.w,
+                              height: currentActivePlayer == "playerOne"
+                                  ? 50.w
+                                  : 40.w,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: currentActivePlayer == "playerOne"
+                                      ? Colors.green
+                                      : Colors.transparent,
+                                  width: 5.w,
+                                ),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: NetworkImage(widget.playerOneAvatar),
+                                ),
+                                boxShadow: currentActivePlayer == "playerOne"
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.green.withOpacity(0.5),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        )
+                                      ]
+                                    : [],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            if (currentActivePlayer == "playerTwo") ...[
+                              const Text(
+                                "Your Turn",
+                                style: TextStyle(
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                            3.h.verticalSpace,
+                            Container(
+                              width: currentActivePlayer == "playerTwo"
+                                  ? 50.w
+                                  : 40.w,
+                              height: currentActivePlayer == "playerTwo"
+                                  ? 50.w
+                                  : 40.w,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: currentActivePlayer == "playerTwo"
+                                      ? Colors.green
+                                      : Colors.transparent,
+                                  width: 5,
+                                ),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  fit: BoxFit.cover,
+                                  image: NetworkImage(widget.playerTwoAvatar),
+                                ),
+                                boxShadow: currentActivePlayer == "playerTwo"
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.green.withOpacity(0.5),
+                                          blurRadius: 10,
+                                          spreadRadius: 2,
+                                        )
+                                      ]
+                                    : [],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                12.h.verticalSpace,
+                Container(
+                  width: 1.sw,
+                  height: 1.sw,
+                  padding: EdgeInsets.only(left: 8.w, right: 8.w),
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: gridSize,
+                    ),
+                    itemCount: numbers.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () => _onCardTap(index),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          transitionBuilder: (child, animation) {
+                            return RotationYTransition(
+                              animation: animation,
+                              child: child,
+                            );
+                          },
+                          child: isOpen[index]
+                              ? _buildCardFront(index)
+                              : _buildCardBack(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                12.h.verticalSpace,
+                Container(
+                  width: 1.sw,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          await _controller.dispose();
+                          Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => MainMenu()),
+                              (route) => false);
+                        },
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          child: Image.asset(
+                            "assets/home.png",
+                            height: 70,
+>>>>>>> Stashed changes
                           ),
                         ),
                       ],
@@ -705,18 +833,33 @@ class _HomePageState extends State<HomePage> {
       purchaseIsLoading = true;
     });
     try {
+<<<<<<< Updated upstream
       Purchases.purchaseStoreProduct(products[0]);
       await Future.delayed(
           const Duration(seconds: 2)); // Simulating purchase delay
       SharedPreferences prefs = await SharedPreferences.getInstance();
+=======
+      CustomerInfo c = await Purchases.purchaseStoreProduct(products[0]);
+>>>>>>> Stashed changes
 
-      setState(() {
-        tipCount = 3;
-        purchaseIsLoading = false;
-      });
+      if (c.activeSubscriptions.isNotEmpty) {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
 
+<<<<<<< Updated upstream
       prefs.setInt('tipCount', 3);
       customDebugPrint("Satın alma başarılı!");
+=======
+        setState(() {
+          tipCount = 3;
+          purchaseIsLoading = false;
+        });
+
+        prefs.setInt('tipCount', 3);
+        print("Satın alma başarılı!");
+      } else {
+        print("UPPSSS");
+      }
+>>>>>>> Stashed changes
     } catch (e) {
       customDebugPrint("Satın alma hatası: $e");
       setState(() {
@@ -940,7 +1083,6 @@ class _HomePageState extends State<HomePage> {
   bool isProcessing = false;
 
   void _onCardTap(int index) {
-    if (countDown > 0) return;
     if (soundEffect) {
       audioPlayer.play(AssetSource("flipcard.mp3"));
     }
